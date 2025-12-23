@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { useState, useCallback, useRef } from "react";
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useConnect, useReconnect } from "wagmi";
 import { base } from "wagmi/chains";
 import {
   APOSTLES_CONTRACT_ADDRESS,
@@ -64,9 +64,16 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
   const [neynarScore, setNeynarScore] = useState<number | null>(null);
   const [mintError, setMintError] = useState<Error | null>(null);
 
+  // Reconnect hooks for fallback connection handling
+  const { reconnectAsync } = useReconnect();
+  const { connectAsync, connectors } = useConnect();
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 2;
+
   // Write contract hook
   const {
     writeContract,
+    writeContractAsync,
     data: txHash,
     isPending: isWritePending,
     isError: isWriteError,
@@ -193,22 +200,69 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
       currentBalance: currentBalance.toString(),
     });
 
-    writeContract({
-      address: APOSTLES_CONTRACT_ADDRESS,
-      abi: APOSTLES_ABI,
-      functionName: "claim",
-      args: [
-        walletAddress as `0x${string}`, // _receiver
-        BigInt(quantity),               // _quantity
-        proof.currency,                 // _currency
-        mintPrice,                      // _pricePerToken
-        proof,                          // _allowlistProof (empty for public)
-        "0x",                           // _data
-      ],
-      value: totalValue,
-      chainId: base.id,
-    });
-  }, [walletAddress, fid, isEligible, checkEligibility, pricePerToken, writeContract, userBalance, remaining, claimCondition, neynarScore]);
+    // Mint contract call with reconnect fallback
+    const executeMint = async () => {
+      try {
+        await writeContractAsync({
+          address: APOSTLES_CONTRACT_ADDRESS,
+          abi: APOSTLES_ABI,
+          functionName: "claim",
+          args: [
+            walletAddress as `0x${string}`, // _receiver
+            BigInt(quantity),               // _quantity
+            proof.currency,                 // _currency
+            mintPrice,                      // _pricePerToken
+            proof,                          // _allowlistProof (empty for public)
+            "0x",                           // _data
+          ],
+          value: totalValue,
+          chainId: base.id,
+        });
+        retryCountRef.current = 0; // Reset retry count on success
+      } catch (err) {
+        const errorMessage = (err as Error)?.message?.toLowerCase() || "";
+        const isConnectorError = 
+          errorMessage.includes("connector") ||
+          errorMessage.includes("getchainid") ||
+          errorMessage.includes("not connected") ||
+          errorMessage.includes("chainid");
+
+        // If it's a connector error and we haven't exceeded retries, try to reconnect
+        if (isConnectorError && retryCountRef.current < MAX_RETRIES) {
+          retryCountRef.current += 1;
+          console.log(`[Mint] Connector error detected, attempting reconnect (attempt ${retryCountRef.current}/${MAX_RETRIES})...`);
+          
+          try {
+            // Try to reconnect first
+            await reconnectAsync();
+            console.log("[Mint] Reconnected successfully, retrying mint...");
+            await executeMint(); // Retry the mint
+          } catch (reconnectErr) {
+            console.log("[Mint] Reconnect failed, trying fresh connect...");
+            try {
+              // If reconnect fails, try a fresh connection with the first available connector
+              const farcasterConnector = connectors.find(c => c.id === "farcasterFrame");
+              if (farcasterConnector) {
+                await connectAsync({ connector: farcasterConnector });
+                console.log("[Mint] Fresh connect successful, retrying mint...");
+                await executeMint();
+              } else {
+                throw reconnectErr;
+              }
+            } catch (connectErr) {
+              console.error("[Mint] All reconnect attempts failed:", connectErr);
+              setMintError(new Error("Connection issue. Please refresh and try again."));
+            }
+          }
+        } else {
+          // Not a connector error or max retries exceeded, propagate the error
+          throw err;
+        }
+      }
+    };
+
+    executeMint();
+  }, [walletAddress, fid, isEligible, checkEligibility, pricePerToken, writeContractAsync, userBalance, remaining, claimCondition, neynarScore, reconnectAsync, connectAsync, connectors]);
 
   const reset = useCallback(() => {
     resetWrite();
