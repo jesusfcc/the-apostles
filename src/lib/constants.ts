@@ -72,8 +72,11 @@ export const APP_SPLASH_BACKGROUND_COLOR: string = '#f7f7f7';
  * Used to associate the mini app with a Farcaster account.
  * If not provided, the mini app will be unsigned and have limited capabilities.
  */
-export const APP_ACCOUNT_ASSOCIATION: AccountAssociation | undefined =
-  undefined;
+export const APP_ACCOUNT_ASSOCIATION: AccountAssociation = {
+  header: "eyJmaWQiOjI4NTUsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgzMjEzN2YwRDVBNjgxYzJCQkIzQzAxQkRGNWI2ZTNjMzcxNUREMmRBIn0",
+  payload: "eyJkb21haW4iOiJhcG9zdGxlLW1pbnQudmVyY2VsLmFwcCJ9",
+  signature: "jJ9bh4XFvITjeqVk7iis1istK63oB7lvfBnISb0xovk/tezrNN/AzI0yZgxTZBJA+CYXN0RizVqQCyJqZPorqRw="
+};
 
 // --- UI Configuration ---
 /**
@@ -148,3 +151,30 @@ export const SIGNED_KEY_REQUEST_TYPE = [
   { name: 'key', type: 'bytes' },
   { name: 'deadline', type: 'uint256' },
 ];
+
+/**
+ * Returns the Farcaster domain manifest configuration.
+ * Used for the .well-known/farcaster.json endpoint.
+ */
+export async function getFarcasterDomainManifest() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (!appUrl) {
+    throw new Error('NEXT_PUBLIC_APP_URL environment variable is not set');
+  }
+
+  return {
+    accountAssociation: APP_ACCOUNT_ASSOCIATION,
+    frame: {
+      version: "1",
+      name: APP_NAME,
+      iconUrl: `${appUrl}/icon.png`,
+      homeUrl: appUrl,
+      imageUrl: `${appUrl}/image.png`,
+      buttonTitle: APP_BUTTON_TEXT,
+      splashImageUrl: `${appUrl}/splash.png`,
+      splashBackgroundColor: APP_SPLASH_BACKGROUND_COLOR,
+      webhookUrl: `${appUrl}/api/webhook`
+    }
+  };
+}
