@@ -22,13 +22,13 @@ export const APP_URL: string = process.env.NEXT_PUBLIC_APP_URL!;
  * The name of the mini app as displayed to users.
  * Used in titles, headers, and app store listings.
  */
-export const APP_NAME: string = 'jesus\'s miniapp';
+export const APP_NAME: string = 'The Apostles';
 
 /**
  * A brief description of the mini app's functionality.
  * Used in app store listings and metadata.
  */
-export const APP_DESCRIPTION: string = 'mini app for apostiles';
+export const APP_DESCRIPTION: string = 'Mini app for apostiles';
 
 /**
  * The primary category for the mini app.
@@ -74,8 +74,8 @@ export const APP_SPLASH_BACKGROUND_COLOR: string = '#f7f7f7';
  */
 export const APP_ACCOUNT_ASSOCIATION: AccountAssociation = {
   header: "eyJmaWQiOjI4NTUsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgzMjEzN2YwRDVBNjgxYzJCQkIzQzAxQkRGNWI2ZTNjMzcxNUREMmRBIn0",
-  payload: "eyJkb21haW4iOiJqZXN1c2Fwb3N0bGVzcy52ZXJjZWwuYXBwIn0",
-  signature: "grIDIFehh72Feq8r7aVzklMh8MIPPkDMAFBKKUF8K253kdJKGBd6dAkLqdtMKf1tTPbI+F2VsAakdWuwASCajRs="
+  payload: "eyJkb21haW4iOiJ0aGVhcG9zdGxlcy1zZXBpYS52ZXJjZWwuYXBwIn0",
+  signature: "xbXNvKb4C4llDbmzDuhqnKEAMI2BoThw2LC9s5p0iAgPqjHZfKfp//1IffQ+cfhlAih5xGXtEYC5SK6sqn41XRw="
 };
 
 // --- UI Configuration ---
@@ -83,7 +83,7 @@ export const APP_ACCOUNT_ASSOCIATION: AccountAssociation = {
  * Text displayed on the main action button.
  * Used for the primary call-to-action in the mini app.
  */
-export const APP_BUTTON_TEXT: string = 'Launch Button';
+export const APP_BUTTON_TEXT: string = 'Open App';
 
 // --- Integration Configuration ---
 /**
@@ -168,7 +168,7 @@ export async function getFarcasterDomainManifest() {
       name: APP_NAME,
       iconUrl: `${APP_URL}/icon.png`,
       homeUrl: APP_URL,
-      imageUrl: `${APP_URL}/image.png`,
+      imageUrl: `${APP_URL}/splash.png`,
       buttonTitle: APP_BUTTON_TEXT,
       splashImageUrl: `${APP_URL}/splash.png`,
       splashBackgroundColor: APP_SPLASH_BACKGROUND_COLOR,
