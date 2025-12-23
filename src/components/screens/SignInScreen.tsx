@@ -4,7 +4,7 @@ import Image from "next/image";
 
 interface SignInScreenProps {
   isVisible: boolean;
-  onSignIn: () => Promise<boolean>;
+  onSignIn: () => Promise<void>;
   isSigningIn: boolean;
 }
 
