@@ -7,7 +7,7 @@ interface SuccessScreenProps {
   isVisible: boolean;
   onBack: () => void;
   onMintAnother: () => void;
-  onShare: () => void;
+  onShare: (tokenId?: number) => void;
   // Legacy single NFT props
   mintedImage?: string | null;
   tokenId?: number;
@@ -226,8 +226,8 @@ export function SuccessScreen({
 
         {/* Share Button */}
         <button
-          onClick={onShare}
-          disabled={isLoading || shareCooldown > 0}
+          onClick={() => onShare(displayTokenId)}
+          disabled={isLoading || shareCooldown > 0 || !displayTokenId}
           className="w-full max-w-[500px] bg-gold text-black py-3 px-8 rounded-lg text-lg font-bold hover:bg-gold-bright transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           style={{ boxShadow: "0 6px 20px rgba(255, 215, 0, 0.4)" }}
         >
