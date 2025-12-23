@@ -6,9 +6,9 @@ import { useFarcaster } from "./providers/FarcasterProvider";
 import { useMint } from "~/hooks/useMint";
 import { useMintedNFT } from "~/hooks/useMintedNFT";
 import { SplashScreen } from "./SplashScreen";
-import { MintScreen, MintingScreen, FailedScreen, SuccessScreen } from "./screens";
+import { MintScreen, MintingScreen, FailedScreen, SuccessScreen, SignInScreen } from "./screens";
 
-export type AppScreen = "splash" | "mint" | "minting" | "failed" | "success";
+export type AppScreen = "splash" | "signin" | "mint" | "minting" | "failed" | "success";
 
 export interface AppProps {
   title?: string;
@@ -59,6 +59,7 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
   const [isSplashFadingOut, setIsSplashFadingOut] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [_mintQuantity, setMintQuantity] = useState(1);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   // --- Splash screen timer ---
   useEffect(() => {
@@ -68,10 +69,11 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
         setIsSplashFadingOut(true);
       }, 2500);
 
-      // After fade out animation completes (0.5s), hide splash and show mint
+      // After fade out animation completes (0.5s), hide splash and show signin or mint
       const hideTimer = setTimeout(() => {
         setShowSplash(false);
-        setCurrentScreen("mint");
+        // Go to signin if no wallet, otherwise go to mint
+        setCurrentScreen(walletAddress ? "mint" : "signin");
       }, 3000);
 
       return () => {
@@ -79,7 +81,14 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
         clearTimeout(hideTimer);
       };
     }
-  }, [isFarcasterLoading]);
+  }, [isFarcasterLoading, walletAddress]);
+
+  // --- Auto-transition to mint after sign in ---
+  useEffect(() => {
+    if (currentScreen === "signin" && walletAddress) {
+      setCurrentScreen("mint");
+    }
+  }, [currentScreen, walletAddress]);
 
   // --- Handle mint state changes ---
   useEffect(() => {
@@ -135,6 +144,15 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
   }, [isMintError, mintError, signIn, resetMint]);
 
   // --- Handlers ---
+  const handleSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      await signIn();
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
   const handleMint = (quantity: number) => {
     setMintQuantity(quantity);
     mint(quantity);
@@ -178,6 +196,13 @@ Join the Gathering. The Miracle has begun`,
     <>
       {/* Splash Screen */}
       <SplashScreen isVisible={showSplash} isFadingOut={isSplashFadingOut} />
+
+      {/* Sign In Screen */}
+      <SignInScreen
+        isVisible={currentScreen === "signin"}
+        onSignIn={handleSignIn}
+        isSigningIn={isSigningIn}
+      />
 
       {/* Mint Screen */}
       <MintScreen

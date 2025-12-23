@@ -101,7 +101,7 @@ export function MintScreen({
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat animate-fade-in relative"
+      className="min-h-screen bg-cover bg-center bg-no-repeat animate-fade-in relative overflow-hidden"
       style={{
         backgroundImage: "url('/assets/bg-image.png')",
       }}
