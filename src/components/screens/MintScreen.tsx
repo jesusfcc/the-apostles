@@ -236,7 +236,10 @@ function MintContent({
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   const { remaining, isLoading: isContractLoading } = useApostlesContract();
-  const { priceEth: _priceEth } = useMintPrice();
+  const { priceEth } = useMintPrice();
+
+  // Calculate total price based on quantity
+  const totalPriceEth = (priceEth * quantity).toFixed(4);
 
   const handleQuantityMinus = () => setQuantity((prev) => Math.max(1, prev - 1));
   const handleQuantityPlus = () => setQuantity((prev) => Math.min(10, prev + 1));
@@ -271,7 +274,7 @@ function MintContent({
     if (isSoldOut) return "SOLD OUT";
     if (needsSignIn) return "SIGN IN TO MINT";
     if (notEligible) return "NOT ELIGIBLE";
-    return "MINT NOW";
+    return `MINT NOW · ${totalPriceEth} ETH`;
   };
 
   return (
