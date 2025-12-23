@@ -47,7 +47,7 @@ export const APP_TAGS: string[] = ['jesus', 'apostile'];
  * URL for the app's icon image.
  * Used in app store listings and UI elements.
  */
-export const APP_ICON_URL: string = `${APP_URL}/icon.png`;
+export const APP_ICON_URL: string = `${APP_URL}/logo.png`;
 
 /**
  * URL for the app's Open Graph image.
@@ -166,7 +166,7 @@ export async function getFarcasterDomainManifest() {
     frame: {
       version: "1",
       name: APP_NAME,
-      iconUrl: `${APP_URL}/icon.png`,
+      iconUrl: `${APP_URL}/logo.png`,
       homeUrl: APP_URL,
       imageUrl: `${APP_URL}/splash.png`,
       buttonTitle: APP_BUTTON_TEXT,
