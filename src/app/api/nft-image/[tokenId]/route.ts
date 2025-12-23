@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, fallback } from "viem";
 import { base } from "viem/chains";
 import { APOSTLES_CONTRACT_ADDRESS, APOSTLES_ABI } from "~/lib/contract";
 
@@ -12,10 +12,19 @@ const IPFS_GATEWAYS = [
   "https://4everland.io/ipfs/",
 ];
 
-// Create viem public client for Base
+// RPC endpoints for Base mainnet (with fallbacks)
+const BASE_RPC_URLS = [
+  process.env.NEXT_PUBLIC_BASE_RPC_URL,
+  "https://base.llamarpc.com",
+  "https://base.drpc.org",
+  "https://1rpc.io/base",
+  "https://mainnet.base.org",
+].filter(Boolean) as string[];
+
+// Create viem public client for Base with fallback RPCs
 const publicClient = createPublicClient({
   chain: base,
-  transport: http(),
+  transport: fallback(BASE_RPC_URLS.map(url => http(url))),
 });
 
 /**

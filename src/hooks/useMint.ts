@@ -171,7 +171,7 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
 
     // Check if user has already minted their max allocation (1 per wallet for public mint)
     const currentBalance = userBalance !== undefined ? BigInt(userBalance as bigint) : 0n;
-    const maxAllowed = 10n; // 10 per wallet for public mint
+    const maxAllowed = 15n; // 10 per wallet for public mint
 
     if (currentBalance >= maxAllowed) {
       const error = new Error(
