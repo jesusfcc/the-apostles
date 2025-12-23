@@ -16,7 +16,7 @@ import { type AccountAssociation } from '@farcaster/miniapp-core/src/manifest';
  * The base URL of the application.
  * Used for generating absolute URLs for assets and API endpoints.
  */
-export const APP_URL: string = process.env.NEXT_PUBLIC_URL!;
+export const APP_URL: string = process.env.NEXT_PUBLIC_APP_URL!;
 
 /**
  * The name of the mini app as displayed to users.
@@ -157,9 +157,7 @@ export const SIGNED_KEY_REQUEST_TYPE = [
  * Used for the .well-known/farcaster.json endpoint.
  */
 export async function getFarcasterDomainManifest() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-
-  if (!appUrl) {
+  if (!APP_URL) {
     throw new Error('NEXT_PUBLIC_APP_URL environment variable is not set');
   }
 
@@ -168,13 +166,13 @@ export async function getFarcasterDomainManifest() {
     frame: {
       version: "1",
       name: APP_NAME,
-      iconUrl: `${appUrl}/icon.png`,
-      homeUrl: appUrl,
-      imageUrl: `${appUrl}/image.png`,
+      iconUrl: `${APP_URL}/icon.png`,
+      homeUrl: APP_URL,
+      imageUrl: `${APP_URL}/image.png`,
       buttonTitle: APP_BUTTON_TEXT,
-      splashImageUrl: `${appUrl}/splash.png`,
+      splashImageUrl: `${APP_URL}/splash.png`,
       splashBackgroundColor: APP_SPLASH_BACKGROUND_COLOR,
-      webhookUrl: `${appUrl}/api/webhook`
+      webhookUrl: `${APP_URL}/api/webhook`
     }
   };
 }
