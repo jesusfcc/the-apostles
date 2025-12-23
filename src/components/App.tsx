@@ -51,7 +51,10 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
     tokenId: mintedTokenId,
     imageUrl: mintedImage,
     metadata: mintedMetadata,
+    mintedNFTs,
     isLoading: isLoadingNFT,
+    error: nftLoadError,
+    refetch: refetchNFT,
   } = useMintedNFT(isMintSuccess ? txHash : undefined);
 
   // --- Screen State ---
@@ -162,13 +165,27 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
     setCurrentScreen("mint");
   };
 
+  // App URL for sharing and launching
+  const APP_SHARE_URL = "https://theapostles-sepia.vercel.app/";
+
   const handleShare = async () => {
     try {
+      // Build embeds array - include image if available, plus app URL
+      const embeds: string[] = [];
+      
+      // Add NFT image if available (first embed for visual impact)
+      if (mintedImage) {
+        embeds.push(mintedImage);
+      }
+      
+      // Always add app URL for launch functionality
+      embeds.push(APP_SHARE_URL);
+
       await composeCast({
-        text: `I have secured my place among the 2525. I am now an Apostle, holding a claim to the Spirit $REDACTED.
+        text: `I have secured my place among the 2525. I am now an Apostle #${mintedTokenId || ""}, holding a claim to the Spirit $REDACTED.
 
 Join the Gathering. The Miracle has begun`,
-        embeds: ["https://apostle-mint.vercel.app"],
+        embeds: embeds.slice(0, 2) as [string] | [string, string], // Max 2 embeds
       });
     } catch (err) {
       console.error("Share failed:", err);
@@ -191,7 +208,6 @@ Join the Gathering. The Miracle has begun`,
         <SignInScreen onConnected={handleWalletConnected} />
       )}
 
-      {/* Mint Screen */}
       <MintScreen
         isVisible={currentScreen === "mint"}
         onMint={handleMint}
@@ -223,6 +239,9 @@ Join the Gathering. The Miracle has begun`,
         tokenId={mintedTokenId || undefined}
         description={mintedMetadata?.description}
         isLoadingNFT={isLoadingNFT}
+        error={nftLoadError}
+        onRetry={refetchNFT}
+        mintedNFTs={mintedNFTs}
       />
     </>
   );

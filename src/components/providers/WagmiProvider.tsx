@@ -1,4 +1,4 @@
-import { createConfig, http, WagmiProvider } from "wagmi";
+import { createConfig, http, WagmiProvider, fallback } from "wagmi";
 import { base, baseSepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { farcasterFrame } from "@farcaster/miniapp-wagmi-connector";
@@ -7,6 +7,17 @@ import { APP_NAME, APP_ICON_URL, APP_URL } from "~/lib/constants";
 import { useEffect, useState } from "react";
 import { useConnect, useAccount } from "wagmi";
 import React from "react";
+
+// RPC endpoints for Base mainnet (with fallbacks for rate limiting)
+const BASE_RPC_URLS = [
+  // Primary: Use env variable if set (Alchemy, QuickNode, etc.)
+  process.env.NEXT_PUBLIC_BASE_RPC_URL,
+  // Fallbacks: Public RPCs with higher rate limits
+  "https://base.llamarpc.com",
+  "https://base.drpc.org",
+  "https://1rpc.io/base",
+  "https://base-mainnet.public.blastapi.io",
+].filter(Boolean) as string[];
 
 // Custom hook for Coinbase Wallet detection and auto-connection
 function useCoinbaseWalletAutoConnect() {
@@ -44,7 +55,8 @@ function useCoinbaseWalletAutoConnect() {
 export const config = createConfig({
   chains: [base, baseSepolia],
   transports: {
-    [base.id]: http(),
+    // Use fallback transport with multiple RPC endpoints
+    [base.id]: fallback(BASE_RPC_URLS.map(url => http(url))),
     [baseSepolia.id]: http(),
   },
   connectors: [

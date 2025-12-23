@@ -146,7 +146,7 @@ export function MintScreen({
               }}
             >
               <Image
-                src="/assets/mint/right.png"
+                src="/assets/mint/1.png"
                 alt="Apostle Preview"
                 width={199}
                 height={257}
@@ -170,7 +170,7 @@ export function MintScreen({
               }}
             >
               <Image
-                src="/assets/mint/mint.png"
+                src="/assets/mint/2.png"
                 alt="The Apostle - Mint"
                 width={220}
                 height={300}
@@ -199,7 +199,7 @@ export function MintScreen({
               }}
             >
               <Image
-                src="/assets/mint/right.png"
+                src="/assets/mint/3.png"
                 alt="Apostle Preview"
                 width={180}
                 height={240}
@@ -223,7 +223,7 @@ export function MintScreen({
           <div className="flex justify-between items-center py-4 px-5 border-b border-gold/30">
             <span className="text-gold font-normal text-[15px] italic">Price</span>
             <span className="text-gold font-normal text-[15px]">
-              {formatPrice(priceEth, quantity)}
+              {`20 silver coins`}
             </span>
           </div>
 
