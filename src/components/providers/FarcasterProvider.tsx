@@ -94,7 +94,7 @@ export function FarcasterProvider({ children }: { children: ReactNode }) {
       console.log('🔐 Attempting Farcaster sign in...');
       // Generate a random nonce for the sign-in request
       const nonce = Math.random().toString(36).substring(2, 15);
-      const result = await sdk.actions.signIn({ nonce });
+      const result = await sdk.actions.signIn({ nonce, acceptAuthAddress: true });
 
       if (result) {
         console.log('✅ Sign in successful:', result);
