@@ -60,6 +60,7 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
   const [showSplash, setShowSplash] = useState(true);
   const [_mintQuantity, setMintQuantity] = useState(1);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [hasSignedIn, setHasSignedIn] = useState(false);
 
   // --- Splash screen timer ---
   useEffect(() => {
@@ -69,11 +70,11 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
         setIsSplashFadingOut(true);
       }, 2500);
 
-      // After fade out animation completes (0.5s), hide splash and show signin or mint
+      // After fade out animation completes (0.5s), hide splash and show signin
       const hideTimer = setTimeout(() => {
         setShowSplash(false);
-        // Go to signin if no wallet, otherwise go to mint
-        setCurrentScreen(walletAddress ? "mint" : "signin");
+        // Always show sign-in screen first
+        setCurrentScreen("signin");
       }, 3000);
 
       return () => {
@@ -81,14 +82,14 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
         clearTimeout(hideTimer);
       };
     }
-  }, [isFarcasterLoading, walletAddress]);
+  }, [isFarcasterLoading]);
 
   // --- Auto-transition to mint after sign in ---
   useEffect(() => {
-    if (currentScreen === "signin" && walletAddress) {
+    if (currentScreen === "signin" && hasSignedIn && walletAddress) {
       setCurrentScreen("mint");
     }
-  }, [currentScreen, walletAddress]);
+  }, [currentScreen, hasSignedIn, walletAddress]);
 
   // --- Handle mint state changes ---
   useEffect(() => {
@@ -147,7 +148,10 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
   const handleSignIn = async () => {
     setIsSigningIn(true);
     try {
-      await signIn();
+      const success = await signIn();
+      if (success) {
+        setHasSignedIn(true);
+      }
     } finally {
       setIsSigningIn(false);
     }
