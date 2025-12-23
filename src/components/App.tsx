@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { useFarcaster } from "./providers/FarcasterProvider";
 import { useMint } from "~/hooks/useMint";
@@ -16,7 +16,7 @@ export interface AppProps {
 
 /**
  * Main App component - The Apostles Mini App
- * 
+ *
  * Manages screen transitions between:
  * - Splash: Initial loading screen
  * - Mint: Main minting interface with carousel
@@ -29,7 +29,7 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
   const { isLoading: isFarcasterLoading, composeCast, signIn, user } = useFarcaster();
 
   // --- Wallet from wagmi ---
-  const { address: walletAddress } = useAccount();
+  const { address: walletAddress, isConnected } = useAccount();
 
   // --- Mint hook (with FID for Neynar score check) ---
   const {
@@ -59,8 +59,6 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
   const [isSplashFadingOut, setIsSplashFadingOut] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [_mintQuantity, setMintQuantity] = useState(1);
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [hasSignedIn, setHasSignedIn] = useState(false);
 
   // --- Splash screen timer ---
   useEffect(() => {
@@ -73,7 +71,7 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
       // After fade out animation completes (0.5s), hide splash and show signin
       const hideTimer = setTimeout(() => {
         setShowSplash(false);
-        // Always show sign-in screen first
+        // Show sign-in screen (it will auto-connect and call onConnected when ready)
         setCurrentScreen("signin");
       }, 3000);
 
@@ -84,12 +82,11 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
     }
   }, [isFarcasterLoading]);
 
-  // --- Auto-transition to mint after sign in ---
-  useEffect(() => {
-    if (currentScreen === "signin" && hasSignedIn && walletAddress) {
-      setCurrentScreen("mint");
-    }
-  }, [currentScreen, hasSignedIn, walletAddress]);
+  // --- Handle wallet connected from SignInScreen ---
+  const handleWalletConnected = useCallback(() => {
+    console.log("[App] Wallet connected, transitioning to mint screen");
+    setCurrentScreen("mint");
+  }, []);
 
   // --- Handle mint state changes ---
   useEffect(() => {
@@ -145,18 +142,6 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
   }, [isMintError, mintError, signIn, resetMint]);
 
   // --- Handlers ---
-  const handleSignIn = async () => {
-    setIsSigningIn(true);
-    try {
-      const success = await signIn();
-      if (success) {
-        setHasSignedIn(true);
-      }
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
-
   const handleMint = (quantity: number) => {
     setMintQuantity(quantity);
     mint(quantity);
@@ -202,11 +187,9 @@ Join the Gathering. The Miracle has begun`,
       <SplashScreen isVisible={showSplash} isFadingOut={isSplashFadingOut} />
 
       {/* Sign In Screen */}
-      <SignInScreen
-        isVisible={currentScreen === "signin"}
-        onSignIn={handleSignIn}
-        isSigningIn={isSigningIn}
-      />
+      {currentScreen === "signin" && (
+        <SignInScreen onConnected={handleWalletConnected} />
+      )}
 
       {/* Mint Screen */}
       <MintScreen
