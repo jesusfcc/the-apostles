@@ -172,12 +172,12 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
     try {
       // Build embeds array - include image if available, plus app URL
       const embeds: string[] = [];
-      
-      // Add NFT image if available (first embed for visual impact)
-      if (mintedImage) {
-        embeds.push(mintedImage);
+
+      // Add NFT image via proxy URL (more reliable than IPFS for Farcaster embeds)
+      if (mintedTokenId) {
+        embeds.push(`${APP_SHARE_URL}api/nft-image/${mintedTokenId}`);
       }
-      
+
       // Always add app URL for launch functionality
       embeds.push(APP_SHARE_URL);
 
