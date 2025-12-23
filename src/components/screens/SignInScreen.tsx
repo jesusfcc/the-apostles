@@ -20,14 +20,15 @@ export function SignInScreen({ onConnected }: SignInScreenProps) {
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [autoConnectAttempted, setAutoConnectAttempted] = useState(false);
+  const [showSignInButton, setShowSignInButton] = useState(false);
 
   // Auto-connect attempt on mount
   useEffect(() => {
-    if (autoConnectAttempted || isConnected || isConnecting || isPending) return;
+    if (autoConnectAttempted || isConnected) return;
 
     // Try auto-connect with Farcaster connector
     const farcasterConnector = connectors[0];
-    if (farcasterConnector) {
+    if (farcasterConnector && !isConnecting && !isPending) {
       console.log("[SignIn] Attempting auto-connect...");
       connect({ connector: farcasterConnector });
     }
@@ -36,6 +37,17 @@ export function SignInScreen({ onConnected }: SignInScreenProps) {
     const timer = setTimeout(() => setAutoConnectAttempted(true), 1500);
     return () => clearTimeout(timer);
   }, [autoConnectAttempted, isConnected, isConnecting, isPending, connect, connectors]);
+
+  // Fallback: show sign in button after 3 seconds regardless of state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isConnected) {
+        console.log("[SignIn] Timeout - showing sign in button");
+        setShowSignInButton(true);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [isConnected]);
 
   // Watch for connection success
   useEffect(() => {
@@ -89,8 +101,8 @@ export function SignInScreen({ onConnected }: SignInScreenProps) {
     );
   }
 
-  // Auto-connecting...
-  if (!autoConnectAttempted || isConnecting || isPending) {
+  // Auto-connecting... (but not if we've timed out)
+  if (!showSignInButton && (!autoConnectAttempted || isConnecting || isPending)) {
     return (
       <div
         className="fixed inset-0 bg-black flex flex-col items-center justify-center"
