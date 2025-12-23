@@ -219,6 +219,10 @@ Join the Gathering. The Miracle has begun`,
         isEligible={isEligible}
         neynarScore={neynarScore}
         mintError={isMintError && mintError?.message?.includes("score") ? mintError.message : null}
+        userPfp={user?.pfpUrl}
+        userName={user?.username}
+        userDisplayName={user?.displayName}
+        onShareNFT={handleShare}
       />
 
       {/* Minting Overlay */}
