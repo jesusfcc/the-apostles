@@ -353,7 +353,7 @@ function MintContent({
         <div className="flex justify-between items-center py-4 px-5 border-b border-gold/30">
           <span className="text-gold font-normal text-[15px] italic">Remaining</span>
           <span className="text-gold font-normal text-[15px]">
-            {isLoading ? "..." : remaining ?? "—"}
+            {isLoading ? "..." : `${remaining ?? "—"}/2525`}
           </span>
         </div>
 
