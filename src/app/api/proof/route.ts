@@ -3,7 +3,7 @@ import { getNeynarClient } from "~/lib/neynar";
 import { NATIVE_TOKEN_ADDRESS } from "~/lib/contract";
 
 const MIN_NEYNAR_SCORE = parseFloat(process.env.MIN_NEYNAR_SCORE || "0.5");
-const MAX_MINT_PER_WALLET = parseInt(process.env.MAX_MINT_PER_WALLET || "15", 15);
+const MAX_MINT_PER_WALLET = parseInt(process.env.MAX_MINT_PER_WALLET || "10", 10);
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

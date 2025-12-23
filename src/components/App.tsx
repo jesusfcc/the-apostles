@@ -168,14 +168,16 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
   // App URL for sharing and launching
   const APP_SHARE_URL = "https://theapostles-sepia.vercel.app/";
 
-  const handleShare = async () => {
+  const handleShare = async (tokenId?: number) => {
     try {
       // Build embeds array - include image if available, plus app URL
       const embeds: string[] = [];
 
       // Add NFT image via proxy URL (more reliable than IPFS for Farcaster embeds)
-      if (mintedTokenId) {
-        embeds.push(`${APP_SHARE_URL}api/nft-image/${mintedTokenId}`);
+      // Use passed tokenId (selected NFT) or fallback to first minted
+      const shareTokenId = tokenId ?? mintedTokenId;
+      if (shareTokenId) {
+        embeds.push(`${APP_SHARE_URL}api/nft-image/${shareTokenId}`);
       }
 
       // Always add app URL for launch functionality
