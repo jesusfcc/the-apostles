@@ -98,6 +98,22 @@ export default function App({ title: _title }: AppProps = { title: "The Apostles
     }
   }, [isMintLoading, isConfirming]);
 
+  // --- Minting timeout fallback ---
+  // If minting screen stays visible for too long, redirect to signin
+  useEffect(() => {
+    if (currentScreen !== "minting") return;
+
+    const MINTING_TIMEOUT = 45000; // 45 seconds timeout
+
+    const timeoutId = setTimeout(() => {
+      console.log("[App] Minting timeout reached, redirecting to signin...");
+      resetMint();
+      setCurrentScreen("signin");
+    }, MINTING_TIMEOUT);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentScreen, resetMint]);
+
   useEffect(() => {
     // Show success screen once mint is confirmed (don't wait for NFT data)
     if (isMintSuccess && txHash) {
@@ -226,7 +242,14 @@ Join the Gathering. The Miracle has begun @jesus`,
       />
 
       {/* Minting Overlay */}
-      <MintingScreen isVisible={currentScreen === "minting"} />
+      <MintingScreen
+        isVisible={currentScreen === "minting"}
+        onCancel={() => {
+          console.log("[App] Minting cancelled by user, redirecting to signin...");
+          resetMint();
+          setCurrentScreen("signin");
+        }}
+      />
 
       {/* Failed Overlay */}
       <FailedScreen
