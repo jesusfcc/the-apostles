@@ -1,22 +1,17 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import { type State } from 'wagmi';
 import { FarcasterProvider } from '~/components/providers/FarcasterProvider';
+import WagmiProvider from '~/components/providers/WagmiProvider';
 
-const WagmiProvider = dynamic(
-  () => import('~/components/providers/WagmiProvider'),
-  {
-    ssr: false,
-  }
-);
-
-export function Providers({
-  children,
-}: {
+interface ProvidersProps {
   children: React.ReactNode;
-}) {
+  initialState?: State;
+}
+
+export function Providers({ children, initialState }: ProvidersProps) {
   return (
-    <WagmiProvider>
+    <WagmiProvider initialState={initialState}>
       <FarcasterProvider>
         {children}
       </FarcasterProvider>
