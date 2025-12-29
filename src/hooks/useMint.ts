@@ -43,10 +43,10 @@ interface UseMintResult {
  */
 export function useMint(walletAddress: string | undefined, fid: number | undefined): UseMintResult {
   // Get price and supply info from contract
-  const { priceWei, claimCondition, remaining } = useApostlesContract();
+  const { priceWei, claimCondition, remaining, activeConditionId } = useApostlesContract();
   const pricePerToken = priceWei ?? 0n;
 
-  // Get user's current NFT balance for max-per-wallet check
+  // Get user's current NFT balance for global max check
   const { data: userBalance } = useReadContract({
     address: APOSTLES_CONTRACT_ADDRESS,
     abi: APOSTLES_ABI,
@@ -55,6 +55,20 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
     chainId: base.id,
     query: {
       enabled: !!walletAddress,
+    },
+  });
+
+  // Get how many user has claimed in CURRENT condition (not total balance)
+  const { data: claimedInCondition } = useReadContract({
+    address: APOSTLES_CONTRACT_ADDRESS,
+    abi: APOSTLES_ABI,
+    functionName: "getSupplyClaimedByWallet",
+    args: walletAddress && activeConditionId !== undefined
+      ? [activeConditionId, walletAddress as `0x${string}`]
+      : undefined,
+    chainId: base.id,
+    query: {
+      enabled: !!walletAddress && activeConditionId !== undefined,
     },
   });
 
@@ -198,18 +212,22 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
     const currency = (currentProofData!.currency || NATIVE_TOKEN_ADDRESS) as `0x${string}`;
 
     const currentBalance = userBalance !== undefined ? BigInt(userBalance as bigint) : 0n;
+    // How many they've claimed in THIS condition (not total balance)
+    const claimedThisCondition = claimedInCondition !== undefined ? BigInt(claimedInCondition as bigint) : 0n;
+
     const isOnAllowlist = proofArray.length > 0;
-    const hasUsedAllowlistMint = isOnAllowlist && currentBalance >= allowlistQuantityLimit;
+    // Check if they've used their free allowlist mint in THIS condition
+    const hasUsedAllowlistMint = isOnAllowlist && claimedThisCondition >= allowlistQuantityLimit;
 
     // Check global max per wallet (from claim condition)
     const globalMaxPerWallet = claimCondition?.quantityLimitPerWallet ?? 12n;
-    if (currentBalance >= globalMaxPerWallet) {
-      setMintError(new Error(`You've reached the maximum of ${globalMaxPerWallet} NFTs per wallet`));
+    if (claimedThisCondition >= globalMaxPerWallet) {
+      setMintError(new Error(`You've reached the maximum of ${globalMaxPerWallet} NFTs per wallet in this phase`));
       return;
     }
 
     // Determine if using allowlist (free) or public ($20) mint
-    // If on allowlist but already used free mint, fall through to public price
+    // If on allowlist but already used free mint in this condition, use public price
     const useAllowlistMint = isOnAllowlist && !hasUsedAllowlistMint;
 
     // Build the allowlist proof struct
@@ -236,9 +254,9 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
       isOnAllowlist,
       useAllowlistMint,
       hasUsedAllowlistMint,
+      claimedThisCondition: claimedThisCondition.toString(),
       pricePerToken: mintPrice.toString(),
       totalValue: totalValue.toString(),
-      currentBalance: currentBalance.toString(),
     });
 
     // Mint contract call with reconnect fallback

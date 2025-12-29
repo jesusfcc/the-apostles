@@ -90,6 +90,16 @@ export const APOSTLES_ABI = [
     ],
     outputs: [{ name: "isOverride", type: "bool" }],
   },
+  {
+    name: "getSupplyClaimedByWallet",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "_conditionId", type: "uint256" },
+      { name: "_claimer", type: "address" },
+    ],
+    outputs: [{ type: "uint256" }],
+  },
   // Write functions
   {
     name: "claim",
