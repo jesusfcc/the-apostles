@@ -193,52 +193,51 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
 
     // Use proof data from API
     const proofArray = currentProofData!.proof as `0x${string}`[];
-    const quantityLimit = BigInt(currentProofData!.quantityLimitPerWallet || "0");
+    const allowlistQuantityLimit = BigInt(currentProofData!.quantityLimitPerWallet || "0");
     const proofPricePerToken = BigInt(currentProofData!.pricePerToken || "0");
     const currency = (currentProofData!.currency || NATIVE_TOKEN_ADDRESS) as `0x${string}`;
 
-    // Check if user has already minted their max allocation
     const currentBalance = userBalance !== undefined ? BigInt(userBalance as bigint) : 0n;
-    // Use allowlist limit if on allowlist, otherwise use default
-    const maxAllowed = quantityLimit > 0n ? quantityLimit : 10n;
+    const isOnAllowlist = proofArray.length > 0;
+    const hasUsedAllowlistMint = isOnAllowlist && currentBalance >= allowlistQuantityLimit;
 
-    if (currentBalance >= maxAllowed) {
-      const error = new Error(
-        `You've already minted your maximum allocation (${maxAllowed.toString()} NFT)`
-      );
-      setMintError(error);
-      console.error("Max per wallet exceeded:", {
-        currentBalance: currentBalance.toString(),
-        maxAllowed: maxAllowed.toString(),
-      });
+    // Check global max per wallet (from claim condition)
+    const globalMaxPerWallet = claimCondition?.quantityLimitPerWallet ?? 12n;
+    if (currentBalance >= globalMaxPerWallet) {
+      setMintError(new Error(`You've reached the maximum of ${globalMaxPerWallet} NFTs per wallet`));
       return;
     }
 
-    // Build the allowlist proof struct for the claim call
-    const proof: AllowlistProof = {
-      proof: proofArray,
-      quantityLimitPerWallet: quantityLimit,
-      pricePerToken: proofPricePerToken,
-      currency: currency,
-    };
+    // Determine if using allowlist (free) or public ($20) mint
+    // If on allowlist but already used free mint, fall through to public price
+    const useAllowlistMint = isOnAllowlist && !hasUsedAllowlistMint;
 
-    // Determine the mint price:
-    // - If allowlisted (has proof), use allowlist price (can be 0 for free)
-    // - Otherwise use the claim condition price (public mint at $20)
-    const mintPrice = proofArray.length > 0
-      ? proofPricePerToken  // Allowlist price (0 = free)
-      : pricePerToken;      // Public mint price from contract
+    // Build the allowlist proof struct
+    const proof: AllowlistProof = useAllowlistMint
+      ? {
+          proof: proofArray,
+          quantityLimitPerWallet: allowlistQuantityLimit,
+          pricePerToken: proofPricePerToken,
+          currency: currency,
+        }
+      : {
+          proof: [],
+          quantityLimitPerWallet: 0n,
+          pricePerToken: 0n,
+          currency: NATIVE_TOKEN_ADDRESS,
+        };
+
+    // Determine mint price
+    const mintPrice = useAllowlistMint ? proofPricePerToken : pricePerToken;
     const totalValue = mintPrice * BigInt(quantity);
 
     console.log("Minting:", {
       quantity,
-      isAllowlisted: proofArray.length > 0,
-      proofLength: proofArray.length,
+      isOnAllowlist,
+      useAllowlistMint,
+      hasUsedAllowlistMint,
       pricePerToken: mintPrice.toString(),
       totalValue: totalValue.toString(),
-      receiver: walletAddress,
-      fid,
-      neynarScore,
       currentBalance: currentBalance.toString(),
     });
 
