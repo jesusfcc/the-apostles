@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "wagmi";
 import { useFarcaster } from "./providers/FarcasterProvider";
+import { useClient } from "~/hooks/useClient";
 import { useMint } from "~/hooks/useMint";
 import { useMintedNFT } from "~/hooks/useMintedNFT";
 import { SplashScreen } from "./SplashScreen";
@@ -25,6 +26,26 @@ export interface AppProps {
  * - Success: Congratulations screen with share options
  */
 export default function App({ title: _title }: AppProps = { title: "The Apostles" }) {
+  // --- Client Detection (Base App vs Farcaster) ---
+  const { isBaseApp, isFarcaster, clientType, clientFid } = useClient();
+
+  // Log client detection for debugging
+  useEffect(() => {
+    console.log('🔍 Client Detection:', {
+      isBaseApp,
+      isFarcaster,
+      clientType,
+      clientFid,
+    });
+    if (isBaseApp) {
+      console.log('📱 Running in Base App');
+    } else if (isFarcaster) {
+      console.log('🟣 Running in Farcaster (Warpcast)');
+    } else {
+      console.log('❓ Unknown client');
+    }
+  }, [isBaseApp, isFarcaster, clientType, clientFid]);
+
   // --- Farcaster Context ---
   const { isLoading: isFarcasterLoading, composeCast, signIn, user } = useFarcaster();
 

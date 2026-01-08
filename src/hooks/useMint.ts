@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useConnect, useReconnect } from "wagmi";
 import { base } from "wagmi/chains";
 import {
@@ -10,6 +10,7 @@ import {
   type AllowlistProof,
 } from "~/lib/contract";
 import { useApostlesContract } from "./useApostlesContract";
+import { useClient } from "./useClient";
 
 interface EligibilityResponse {
   isEligible: boolean;
@@ -42,6 +43,9 @@ interface UseMintResult {
  * Checks Neynar score >= 0.5 for eligibility (public mint)
  */
 export function useMint(walletAddress: string | undefined, fid: number | undefined): UseMintResult {
+  // Detect client type for connector selection
+  const { isBaseApp } = useClient();
+
   // Get price and supply info from contract
   const { priceWei, claimCondition, remaining, activeConditionId } = useApostlesContract();
   const pricePerToken = priceWei ?? 0n;
@@ -86,6 +90,14 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
   const { connectAsync, connectors } = useConnect();
   const retryCountRef = useRef(0);
   const MAX_RETRIES = 2;
+
+  // Get the appropriate connector based on client type
+  const preferredConnector = useMemo(() => {
+    if (isBaseApp) {
+      return connectors.find(c => c.id === 'coinbaseWalletSDK' || c.name.toLowerCase().includes('coinbase')) || connectors[1];
+    }
+    return connectors.find(c => c.id === 'farcasterFrame') || connectors[0];
+  }, [isBaseApp, connectors]);
 
   // Write contract hook
   const {
@@ -290,7 +302,7 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
         if (isConnectorError && retryCountRef.current < MAX_RETRIES) {
           retryCountRef.current += 1;
           console.log(`[Mint] Connector error detected, attempting reconnect (attempt ${retryCountRef.current}/${MAX_RETRIES})...`);
-          
+
           try {
             // Try to reconnect first
             await reconnectAsync();
@@ -299,10 +311,10 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
           } catch (reconnectErr) {
             console.log("[Mint] Reconnect failed, trying fresh connect...");
             try {
-              // If reconnect fails, try a fresh connection with the first available connector
-              const farcasterConnector = connectors.find(c => c.id === "farcasterFrame");
-              if (farcasterConnector) {
-                await connectAsync({ connector: farcasterConnector });
+              // If reconnect fails, try a fresh connection with the preferred connector
+              if (preferredConnector) {
+                console.log("[Mint] Connecting with:", preferredConnector.name);
+                await connectAsync({ connector: preferredConnector });
                 console.log("[Mint] Fresh connect successful, retrying mint...");
                 await executeMint();
               } else {
@@ -321,7 +333,7 @@ export function useMint(walletAddress: string | undefined, fid: number | undefin
     };
 
     executeMint();
-  }, [walletAddress, fid, isEligible, proofData, checkEligibility, pricePerToken, writeContractAsync, userBalance, remaining, claimCondition, neynarScore, reconnectAsync, connectAsync, connectors]);
+  }, [walletAddress, fid, isEligible, proofData, checkEligibility, pricePerToken, writeContractAsync, userBalance, remaining, claimCondition, neynarScore, reconnectAsync, connectAsync, preferredConnector, claimedInCondition]);
 
   const reset = useCallback(() => {
     resetWrite();

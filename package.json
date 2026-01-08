@@ -41,6 +41,7 @@
     "ansi-styles": "6.2.1"
   },
   "dependencies": {
+    "@coinbase/onchainkit": "^1.1.2",
     "@farcaster/auth-client": ">=0.3.0 <1.0.0",
     "@farcaster/mini-app-solana": ">=0.0.17 <1.0.0",
     "@farcaster/miniapp-node": ">=0.1.5 <1.0.0",
