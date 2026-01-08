@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAccount, useConnect } from "wagmi";
 import Image from "next/image";
 import { useFarcaster } from "../providers/FarcasterProvider";
+import { useClient } from "~/hooks/useClient";
 import sdk from "@farcaster/miniapp-sdk";
 
 interface SignInScreenProps {
@@ -11,12 +12,28 @@ interface SignInScreenProps {
 }
 
 /**
- * SignInScreen - Self-contained sign-in with auto-connect and Farcaster wallet
+ * SignInScreen - Self-contained sign-in with auto-connect
+ * Uses Farcaster wallet in Warpcast, Coinbase wallet in Base App
  */
 export function SignInScreen({ onConnected }: SignInScreenProps) {
   const { user, isLoading: isFarcasterLoading, safeAreaInsets } = useFarcaster();
+  const { isBaseApp } = useClient();
   const { isConnected, isConnecting } = useAccount();
   const { connect, connectors, isPending } = useConnect();
+
+  // Get the appropriate connector based on client type
+  const preferredConnector = useMemo(() => {
+    if (isBaseApp) {
+      // In Base App, use Coinbase Wallet connector
+      const cbConnector = connectors.find(c => c.id === 'coinbaseWalletSDK' || c.name.toLowerCase().includes('coinbase'));
+      console.log('[SignIn] Base App detected, using Coinbase connector:', cbConnector?.name);
+      return cbConnector || connectors[1]; // fallback to index 1 (coinbaseWallet in config)
+    }
+    // In Farcaster (Warpcast), use Farcaster Frame connector
+    const fcConnector = connectors.find(c => c.id === 'farcasterFrame');
+    console.log('[SignIn] Farcaster detected, using Farcaster connector:', fcConnector?.name);
+    return fcConnector || connectors[0];
+  }, [isBaseApp, connectors]);
 
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [autoConnectAttempted, setAutoConnectAttempted] = useState(false);
@@ -26,17 +43,16 @@ export function SignInScreen({ onConnected }: SignInScreenProps) {
   useEffect(() => {
     if (autoConnectAttempted || isConnected) return;
 
-    // Try auto-connect with Farcaster connector
-    const farcasterConnector = connectors[0];
-    if (farcasterConnector && !isConnecting && !isPending) {
-      console.log("[SignIn] Attempting auto-connect...");
-      connect({ connector: farcasterConnector });
+    // Try auto-connect with the appropriate connector
+    if (preferredConnector && !isConnecting && !isPending) {
+      console.log("[SignIn] Attempting auto-connect with:", preferredConnector.name);
+      connect({ connector: preferredConnector });
     }
 
     // Mark as attempted after a short delay
     const timer = setTimeout(() => setAutoConnectAttempted(true), 1500);
     return () => clearTimeout(timer);
-  }, [autoConnectAttempted, isConnected, isConnecting, isPending, connect, connectors]);
+  }, [autoConnectAttempted, isConnected, isConnecting, isPending, connect, preferredConnector]);
 
   // Fallback: show sign in button after 3 seconds regardless of state
   useEffect(() => {
@@ -58,32 +74,37 @@ export function SignInScreen({ onConnected }: SignInScreenProps) {
   }, [isConnected, onConnected]);
 
   /**
-   * Handle sign in - connects with Farcaster wallet
+   * Handle sign in - connects with appropriate wallet based on client
    */
   const handleSignIn = useCallback(async () => {
     setIsSigningIn(true);
 
     try {
-      // Try using SDK signIn first for proper authentication
-      const nonce = Math.random().toString(36).substring(2, 15);
-      await sdk.actions.signIn({ nonce, acceptAuthAddress: true });
+      // In Farcaster, try SDK signIn first for proper authentication
+      if (!isBaseApp) {
+        try {
+          const nonce = Math.random().toString(36).substring(2, 15);
+          await sdk.actions.signIn({ nonce, acceptAuthAddress: true });
+        } catch (err) {
+          console.log("[SignIn] SDK signIn not available:", err);
+        }
+      }
 
-      // Then connect the wallet
-      const farcasterConnector = connectors[0];
-      if (farcasterConnector && !isConnected) {
-        connect({ connector: farcasterConnector });
+      // Connect with the appropriate wallet
+      if (preferredConnector && !isConnected) {
+        console.log("[SignIn] Connecting with:", preferredConnector.name);
+        connect({ connector: preferredConnector });
       }
     } catch (err) {
-      console.log("[SignIn] SDK signIn not available, using direct connect", err);
+      console.log("[SignIn] Connection error, using direct connect", err);
       // Fallback: just connect the wallet directly
-      const farcasterConnector = connectors[0];
-      if (farcasterConnector) {
-        connect({ connector: farcasterConnector });
+      if (preferredConnector) {
+        connect({ connector: preferredConnector });
       }
     } finally {
       setIsSigningIn(false);
     }
-  }, [connect, connectors, isConnected]);
+  }, [connect, preferredConnector, isConnected, isBaseApp]);
 
   // Still loading Farcaster SDK
   if (isFarcasterLoading) {
