@@ -1,0 +1,626 @@
+# Project Rules for Jesus Mini-App
+
+## Project Overview
+This is a Farcaster mini-app built with Next.js, TypeScript, Supabase, and Viem for Web3 integration.
+
+## Tech Stack
+- **Framework**: Next.js (App Router)
+- **Language**: TypeScript (strict mode)
+- **Styling**: Tailwind CSS
+- **Database**: Supabase
+- **Web3**: Viem
+- **SDK**: Neynar (Farcaster)
+- **Path Alias**: `~/` maps to `./src/`
+
+---
+
+## Code Style & Conventions
+
+### TypeScript
+- Use strict TypeScript with proper type annotations
+- Prefer `interface` over `type` for object shapes
+- Use `const` assertions for literal types
+- Avoid `any` - use `unknown` if type is truly unknown
+- Use path alias `~/` for imports from `src/` directory
+
+### React Components
+- Use functional components with TypeScript
+- Prefer named exports for components
+- Use PascalCase for component names
+- Use camelCase for props and variables
+- Keep components focused and single-responsibility
+
+### File Organization
+- Components in `src/components/`
+- Hooks in `src/hooks/`
+- Utilities in `src/lib/`
+- App routes in `src/app/`
+- Co-locate related files (component + styles + tests)
+
+---
+
+## Performance Optimizations
+
+### Bundle Size & Imports
+
+#### CRITICAL: Avoid Barrel File Imports
+Import directly from source files instead of barrel files to avoid loading thousands of unused modules.
+
+**Incorrect:**
+```tsx
+import { Check, X, Menu } from 'lucide-react'
+// Loads 1,583 modules, takes ~2.8s extra in dev
+```
+
+**Correct:**
+```tsx
+import Check from 'lucide-react/dist/esm/icons/check'
+import X from 'lucide-react/dist/esm/icons/x'
+import Menu from 'lucide-react/dist/esm/icons/menu'
+```
+
+**Alternative (Next.js 13.5+):**
+```js
+// next.config.ts
+export default {
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-*']
+  }
+}
+```
+
+Libraries commonly affected: `lucide-react`, `@radix-ui/react-*`, `lodash`, `date-fns`, `react-use`
+
+#### Dynamic Imports for Code Splitting
+```tsx
+// For heavy components
+const HeavyChart = dynamic(() => import('~/components/HeavyChart'), {
+  loading: () => <Skeleton />,
+  ssr: false // if client-only
+})
+```
+
+#### Conditional Loading
+```tsx
+// Only load when needed
+const AdminPanel = condition 
+  ? await import('~/components/AdminPanel')
+  : null
+```
+
+### React Rendering Optimizations
+
+#### Defer Await Until Needed
+Move `await` operations into branches where they're actually used.
+
+**Incorrect:**
+```typescript
+async function handleRequest(userId: string, skipProcessing: boolean) {
+  const userData = await fetchUserData(userId)
+  
+  if (skipProcessing) {
+    return { skipped: true } // Still waited for userData
+  }
+  
+  return processUserData(userData)
+}
+```
+
+**Correct:**
+```typescript
+async function handleRequest(userId: string, skipProcessing: boolean) {
+  if (skipProcessing) {
+    return { skipped: true } // Returns immediately
+  }
+  
+  const userData = await fetchUserData(userId)
+  return processUserData(userData)
+}
+```
+
+#### Extract to Memoized Components
+Extract expensive work into memoized components to enable early returns.
+
+**Incorrect:**
+```tsx
+function Profile({ user, loading }: Props) {
+  const avatar = useMemo(() => {
+    const id = computeAvatarId(user)
+    return <Avatar id={id} />
+  }, [user])
+
+  if (loading) return <Skeleton />
+  return <div>{avatar}</div>
+}
+```
+
+**Correct:**
+```tsx
+const UserAvatar = memo(function UserAvatar({ user }: { user: User }) {
+  const id = useMemo(() => computeAvatarId(user), [user])
+  return <Avatar id={id} />
+})
+
+function Profile({ user, loading }: Props) {
+  if (loading) return <Skeleton />
+  return <div><UserAvatar user={user} /></div>
+}
+```
+
+#### Hoist Static JSX Elements
+Extract static JSX outside components to avoid re-creation.
+
+**Incorrect:**
+```tsx
+function Container() {
+  return (
+    <div>
+      {loading && <div className="animate-pulse h-20 bg-gray-200" />}
+    </div>
+  )
+}
+```
+
+**Correct:**
+```tsx
+const loadingSkeleton = (
+  <div className="animate-pulse h-20 bg-gray-200" />
+)
+
+function Container() {
+  return <div>{loading && loadingSkeleton}</div>
+}
+```
+
+#### Use Explicit Conditional Rendering
+Use ternary operators instead of `&&` when condition can be `0` or `NaN`.
+
+**Incorrect:**
+```tsx
+{count && <span className="badge">{count}</span>}
+// Renders "0" when count is 0
+```
+
+**Correct:**
+```tsx
+{count > 0 ? <span className="badge">{count}</span> : null}
+```
+
+#### Functional setState for Derived Updates
+Use functional form when new state depends on previous state.
+
+**Incorrect:**
+```tsx
+setCount(count + 1) // Stale closure risk
+```
+
+**Correct:**
+```tsx
+setCount(prev => prev + 1)
+```
+
+#### Lazy State Initialization
+Use function form for expensive initial state computation.
+
+**Incorrect:**
+```tsx
+const [data, setData] = useState(expensiveComputation())
+// Runs on every render
+```
+
+**Correct:**
+```tsx
+const [data, setData] = useState(() => expensiveComputation())
+// Runs only once
+```
+
+#### Minimize Hook Dependencies
+Only include values that should trigger re-execution.
+
+**Incorrect:**
+```tsx
+useEffect(() => {
+  fetchData(config.apiUrl)
+}, [config]) // Re-runs when any config property changes
+```
+
+**Correct:**
+```tsx
+const { apiUrl } = config
+useEffect(() => {
+  fetchData(apiUrl)
+}, [apiUrl]) // Only re-runs when apiUrl changes
+```
+
+### Server-Side Optimizations
+
+#### Per-Request Deduplication with React.cache()
+Use `React.cache()` for server-side request deduplication.
+
+**Usage:**
+```typescript
+import { cache } from 'react'
+
+export const getCurrentUser = cache(async () => {
+  const session = await auth()
+  if (!session?.user?.id) return null
+  return await db.user.findUnique({
+    where: { id: session.user.id }
+  })
+})
+```
+
+**Avoid inline objects as arguments:**
+```typescript
+// Incorrect (always cache miss)
+const getUser = cache(async (params: { uid: number }) => {
+  return await db.user.findUnique({ where: { id: params.uid } })
+})
+getUser({ uid: 1 })
+getUser({ uid: 1 }) // Cache miss
+
+// Correct (cache hit)
+const getUser = cache(async (uid: number) => {
+  return await db.user.findUnique({ where: { id: uid } })
+})
+getUser(1)
+getUser(1) // Cache hit
+```
+
+#### Parallel Data Fetching
+Fetch independent data in parallel.
+
+**Incorrect:**
+```typescript
+const user = await getUser()
+const posts = await getPosts()
+const comments = await getComments()
+// Total: 300ms + 200ms + 150ms = 650ms
+```
+
+**Correct:**
+```typescript
+const [user, posts, comments] = await Promise.all([
+  getUser(),
+  getPosts(),
+  getComments()
+])
+// Total: max(300ms, 200ms, 150ms) = 300ms
+```
+
+#### Non-Blocking Operations with after()
+Use Next.js `after()` for non-critical operations (Next.js 15+).
+
+```typescript
+import { after } from 'next/server'
+
+export async function POST(req: Request) {
+  const data = await req.json()
+  const result = await saveToDb(data)
+  
+  after(async () => {
+    await sendAnalytics(data)
+    await updateCache(result)
+  })
+  
+  return Response.json(result) // Returns immediately
+}
+```
+
+### JavaScript Performance
+
+#### Cache Repeated Function Calls
+Use module-level Map to cache function results.
+
+```typescript
+const slugifyCache = new Map<string, string>()
+
+function cachedSlugify(text: string): string {
+  if (slugifyCache.has(text)) {
+    return slugifyCache.get(text)!
+  }
+  const result = slugify(text)
+  slugifyCache.set(text, result)
+  return result
+}
+```
+
+#### Hoist RegExp Creation
+Don't create RegExp inside render.
+
+**Incorrect:**
+```tsx
+function Highlighter({ text, query }: Props) {
+  const regex = new RegExp(`(${query})`, 'gi')
+  // ...
+}
+```
+
+**Correct:**
+```tsx
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function Highlighter({ text, query }: Props) {
+  const regex = useMemo(
+    () => new RegExp(`(${escapeRegex(query)})`, 'gi'),
+    [query]
+  )
+  // ...
+}
+```
+
+#### Use Set/Map for Lookups
+Use Set/Map instead of Array for O(1) lookups.
+
+**Incorrect:**
+```typescript
+const ids = [1, 2, 3, 4, 5]
+if (ids.includes(userId)) { } // O(n)
+```
+
+**Correct:**
+```typescript
+const ids = new Set([1, 2, 3, 4, 5])
+if (ids.has(userId)) { } // O(1)
+```
+
+#### Early Exit from Loops
+Exit early when condition is met.
+
+```typescript
+// Incorrect
+let found = false
+for (const item of items) {
+  if (item.id === targetId) {
+    found = true
+  }
+}
+
+// Correct
+let found = false
+for (const item of items) {
+  if (item.id === targetId) {
+    found = true
+    break // Exit early
+  }
+}
+```
+
+### Client-Side Optimizations
+
+#### Passive Event Listeners
+Use passive listeners for scroll/touch events.
+
+```typescript
+useEffect(() => {
+  const handleScroll = () => { /* ... */ }
+  
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  
+  return () => window.removeEventListener('scroll', handleScroll)
+}, [])
+```
+
+#### Version and Minimize localStorage Data
+Add version prefix and store only needed fields.
+
+```typescript
+const VERSION = 'v2'
+
+function saveConfig(config: { theme: string; language: string }) {
+  try {
+    localStorage.setItem(`userConfig:${VERSION}`, JSON.stringify(config))
+  } catch {
+    // Throws in incognito/private browsing
+  }
+}
+
+function loadConfig() {
+  try {
+    const data = localStorage.getItem(`userConfig:${VERSION}`)
+    return data ? JSON.parse(data) : null
+  } catch {
+    return null
+  }
+}
+```
+
+#### Batch DOM Updates
+Group DOM reads and writes to avoid layout thrashing.
+
+```typescript
+// Incorrect (causes layout thrashing)
+elements.forEach(el => {
+  const height = el.offsetHeight // Read
+  el.style.height = height + 10 + 'px' // Write
+})
+
+// Correct (batch reads, then writes)
+const heights = elements.map(el => el.offsetHeight)
+elements.forEach((el, i) => {
+  el.style.height = heights[i] + 10 + 'px'
+})
+```
+
+---
+
+## Web3 & Blockchain
+
+### Viem Best Practices
+- Use `viem` for all Web3 interactions
+- Prefer `publicClient` for read operations
+- Use `walletClient` for write operations
+- Always handle errors from blockchain calls
+- Use proper types from `viem` (Address, Hash, etc.)
+
+### Error Handling
+```typescript
+try {
+  const hash = await walletClient.writeContract({
+    address: contractAddress,
+    abi: contractABI,
+    functionName: 'stake',
+    args: [tokenId]
+  })
+  
+  const receipt = await publicClient.waitForTransactionReceipt({ hash })
+  
+  if (receipt.status === 'success') {
+    // Handle success
+  }
+} catch (error) {
+  if (error instanceof Error) {
+    // Handle user rejection, insufficient funds, etc.
+  }
+}
+```
+
+---
+
+## Supabase Best Practices
+
+### Authentication
+- Use Supabase Auth for user management
+- Implement proper session handling
+- Use Row Level Security (RLS) policies
+
+### Database Queries
+- Use TypeScript types from Supabase CLI
+- Implement proper error handling
+- Use `.select()` to specify needed columns only
+- Use `.single()` when expecting one result
+
+```typescript
+const { data, error } = await supabase
+  .from('users')
+  .select('id, name, email')
+  .eq('id', userId)
+  .single()
+
+if (error) {
+  // Handle error
+}
+```
+
+---
+
+## Farcaster/Neynar Integration
+
+### API Calls
+- Use Neynar SDK for Farcaster interactions
+- Cache responses when appropriate
+- Handle rate limits gracefully
+- Implement proper error boundaries
+
+### Mini-App Specific
+- Follow Farcaster Frames v2 specifications
+- Implement proper meta tags for frame discovery
+- Handle mobile and desktop experiences
+- Test in Warpcast client
+
+---
+
+## Testing & Quality
+
+### Before Committing
+- Run `npm run lint` to check for linting errors
+- Ensure TypeScript compiles without errors
+- Test in both development and production builds
+- Verify mobile responsiveness
+
+### Code Review Checklist
+- [ ] No console.logs in production code
+- [ ] Proper error handling implemented
+- [ ] Loading states handled
+- [ ] Accessibility considerations (ARIA labels, keyboard navigation)
+- [ ] Performance optimizations applied where needed
+- [ ] Types are properly defined
+- [ ] No unused imports or variables
+
+---
+
+## Security
+
+### Environment Variables
+- Never commit `.env` files
+- Use `.env.example` for documentation
+- Validate environment variables at startup
+- Use different values for dev/staging/production
+
+### API Keys & Secrets
+- Store in environment variables
+- Never expose in client-side code
+- Use server-side API routes for sensitive operations
+- Implement rate limiting on API routes
+
+### Input Validation
+- Validate all user inputs
+- Sanitize data before database operations
+- Use Zod or similar for runtime type checking
+- Implement CSRF protection
+
+---
+
+## Git Workflow
+
+### Commit Messages
+- Use conventional commits format
+- Examples:
+  - `feat: add staking functionality`
+  - `fix: resolve wallet connection issue`
+  - `refactor: optimize component rendering`
+  - `docs: update README with deployment steps`
+
+### Branch Naming
+- `feature/description` for new features
+- `fix/description` for bug fixes
+- `refactor/description` for refactoring
+- `docs/description` for documentation
+
+---
+
+## Deployment
+
+### Vercel
+- Use `npm run deploy:vercel` for deployment
+- Ensure environment variables are set in Vercel dashboard
+- Test preview deployments before promoting to production
+- Monitor performance and errors in Vercel Analytics
+
+### Build Optimization
+- Analyze bundle size with `npm run build`
+- Check for unused dependencies
+- Optimize images (use Next.js Image component)
+- Implement proper caching headers
+
+---
+
+## Additional Notes
+
+### When to Optimize
+- Don't prematurely optimize
+- Profile first, then optimize
+- Focus on user-facing performance
+- Measure impact of optimizations
+
+### Documentation
+- Document complex logic with comments
+- Keep README up to date
+- Document API endpoints
+- Maintain changelog for significant changes
+
+### Accessibility
+- Use semantic HTML
+- Implement keyboard navigation
+- Add ARIA labels where needed
+- Test with screen readers
+- Ensure proper color contrast
+
+---
+
+## References
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Viem Documentation](https://viem.sh)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Neynar Documentation](https://docs.neynar.com)
+- [React Performance Optimization](https://react.dev/learn/render-and-commit)
