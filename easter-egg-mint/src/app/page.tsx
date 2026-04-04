@@ -1,7 +1,7 @@
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { APP_NAME, APP_DESCRIPTION, APP_OG_IMAGE_URL } from "~/lib/constants";
 import { getMiniAppEmbedMetadata } from "~/lib/utils";
+import AppLoader from "~/components/AppLoader";
 
 export const revalidate = 300;
 
@@ -19,8 +19,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const App = dynamic(() => import("~/components/App"), { ssr: false });
-
 export default function Home() {
-  return <App />;
+  return <AppLoader />;
 }
