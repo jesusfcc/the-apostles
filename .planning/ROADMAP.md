@@ -69,7 +69,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — App shell, state machine, Connect + Generate screens
+- [x] 04-01-PLAN.md — App shell, state machine, Connect + Generate screens
 - [ ] 04-02-PLAN.md — Preview, Mint, Success screens + share functionality
 
 ### Phase 5: Burn + Evolve
@@ -90,5 +90,5 @@ Plans:
 | 1. Scaffold + Infra | 1/1 | Complete | 2026-04-04 |
 | 2. Trait + Image Gen | 1/1 | Complete | 2026-04-04 |
 | 3. Mint Flow | 2/2 | Complete | 2026-04-04 |
-| 4. UI/UX | 0/2 | In progress | - |
+| 4. UI/UX | 1/2 | In progress | - |
 | 5. Burn + Evolve | 0/? | Not started | - |
