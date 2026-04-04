@@ -8,7 +8,7 @@ Build a Warplets-style AI-generated NFT pipeline: Farcaster PFP → trait extrac
 
 - [x] **Phase 1: Scaffold + Infra** - Copy main-apostole boilerplate, set up new app shell
 - [x] **Phase 2: Trait Extraction + Image Gen Pipeline** - Gemini integration for traits and egg generation
-- [ ] **Phase 3: Mint Flow** - ERC721 contract, IPFS upload, mint transaction
+- [x] **Phase 3: Mint Flow** - ERC721 contract, IPFS upload, mint transaction
 - [ ] **Phase 4: UI/UX** - Full app screens with /frontend-design skill
 - [ ] **Phase 5: Burn + Evolve** - Burn NFT, re-generate evolved egg, lineage tracking
 
@@ -55,7 +55,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — ERC721 contract + Arweave upload pipeline (Irys + metadata)
-- [ ] 03-02-PLAN.md — Client-side mint hook + contract config
+- [x] 03-02-PLAN.md — Client-side mint hook + contract config
 
 ### Phase 4: UI/UX
 **Goal**: Polished end-to-end mobile-first flow
@@ -85,6 +85,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Scaffold + Infra | 1/1 | Complete | 2026-04-04 |
 | 2. Trait + Image Gen | 1/1 | Complete | 2026-04-04 |
-| 3. Mint Flow | 1/2 | In progress | - |
+| 3. Mint Flow | 2/2 | Complete | 2026-04-04 |
 | 4. UI/UX | 0/? | Not started | - |
 | 5. Burn + Evolve | 0/? | Not started | - |

@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 ## Current Position
 
-Phase: 3 of 5 (Mint Flow)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-04-04 — Completed 03-01 (ERC721 contract + Arweave upload pipeline)
+Phase: 3 of 5 (Mint Flow) -- COMPLETE
+Plan: 2 of 2 in current phase (all done)
+Status: Phase 3 complete, ready for Phase 4
+Last activity: 2026-04-04 -- Completed 03-02 (mint hook + contract config)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: ~45 min
+- Total plans completed: 3
+- Average duration: ~30 min
 - Total execution time: ~1.5 hours
 
 **By Phase:**
@@ -29,7 +29,7 @@ Progress: [█████░░░░░] 50%
 |-------|-------|-------|----------|
 | 1 | 1 | ~30 min | ~30 min |
 | 2 | 1 | ~60 min | ~60 min |
-| 3 (plan 1) | 1 | ~2 min | ~2 min |
+| 3 | 2 | ~5 min | ~2.5 min |
 
 ## Accumulated Context
 
@@ -42,6 +42,9 @@ Progress: [█████░░░░░] 50%
 - [Phase 3]: Arweave via Irys instead of Pinata for permanent decentralized NFT storage
 - [Phase 3]: Custom Solidity error types instead of require strings (gas efficient)
 - [Phase 3]: base-eth token for Irys payments (pay with ETH on Base)
+- [Phase 3]: ABI extracted from Foundry with only 7 relevant functions (keeps bundle small)
+- [Phase 3]: Contract address via NEXT_PUBLIC_NFT_CONTRACT_ADDRESS env var
+- [Phase 3]: chainId enforcement in mint hook to prompt network switch
 
 ### Pending Todos
 
@@ -56,5 +59,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Completed 03-01-PLAN.md (ERC721 contract + Arweave upload pipeline)
+Stopped at: Completed 03-02-PLAN.md (mint hook + contract config) -- Phase 3 fully complete
 Resume file: None
