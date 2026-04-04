@@ -54,7 +54,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — ERC721 contract + IPFS upload pipeline (Pinata + metadata)
+- [x] 03-01-PLAN.md — ERC721 contract + Arweave upload pipeline (Irys + metadata)
 - [ ] 03-02-PLAN.md — Client-side mint hook + contract config
 
 ### Phase 4: UI/UX
@@ -85,6 +85,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Scaffold + Infra | 1/1 | Complete | 2026-04-04 |
 | 2. Trait + Image Gen | 1/1 | Complete | 2026-04-04 |
-| 3. Mint Flow | 0/2 | Planning complete | - |
+| 3. Mint Flow | 1/2 | In progress | - |
 | 4. UI/UX | 0/? | Not started | - |
 | 5. Burn + Evolve | 0/? | Not started | - |
