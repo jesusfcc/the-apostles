@@ -42,13 +42,26 @@ export function useEggFlow() {
     setState("preview");
   }, []);
 
+  const startMinting = useCallback(() => {
+    setState("minting");
+  }, []);
+
   const onMetadataUploaded = useCallback(
     (tokenURI: string, imageURI: string) => {
       setData((prev) => ({ ...prev, tokenURI, imageURI }));
-      setState("minting");
     },
     []
   );
+
+  const regenerate = useCallback(() => {
+    setData((prev) => ({
+      ...prev,
+      traits: null,
+      imageBase64: null,
+      error: null,
+    }));
+    setState("generate");
+  }, []);
 
   const onMinted = useCallback((txHash: string) => {
     setData((prev) => ({ ...prev, txHash }));
@@ -70,9 +83,11 @@ export function useEggFlow() {
     ...data,
     onConnected,
     onGenerated,
+    startMinting,
     onMetadataUploaded,
     onMinted,
     onError,
+    regenerate,
     reset,
   };
 }

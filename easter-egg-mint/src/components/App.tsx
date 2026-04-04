@@ -6,6 +6,9 @@ import { useMiniApp } from "@neynar/react";
 import { useEggFlow } from "~/hooks/useEggFlow";
 import ConnectScreen from "~/components/screens/ConnectScreen";
 import GenerateScreen from "~/components/screens/GenerateScreen";
+import PreviewScreen from "~/components/screens/PreviewScreen";
+import MintScreen from "~/components/screens/MintScreen";
+import SuccessScreen from "~/components/screens/SuccessScreen";
 
 export default function App() {
   const { isSDKLoaded, context } = useMiniApp();
@@ -28,12 +31,14 @@ export default function App() {
   }, [isSDKLoaded, context, prompted]);
 
   const safeArea = context?.client?.safeAreaInsets;
+  const fid = context?.user?.fid;
 
   // Render current screen based on flow state
   const renderScreen = () => {
     switch (flow.state) {
       case "connect":
         return <ConnectScreen onConnected={flow.onConnected} />;
+
       case "generate":
         return (
           <GenerateScreen
@@ -41,27 +46,43 @@ export default function App() {
             onError={flow.onError}
           />
         );
+
       case "preview":
+        if (!flow.traits || !flow.imageBase64) return null;
         return (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-vintage-black/60 text-lg">Preview screen coming soon...</p>
-          </div>
+          <PreviewScreen
+            traits={flow.traits}
+            imageBase64={flow.imageBase64}
+            onMint={flow.startMinting}
+            onRegenerate={flow.regenerate}
+          />
         );
+
       case "minting":
+        if (!flow.traits || !flow.imageBase64 || !fid) return null;
         return (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <div className="w-8 h-8 border-2 border-vintage-black border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-vintage-black/70 font-bold tracking-widest">MINTING...</p>
-            </div>
-          </div>
+          <MintScreen
+            imageBase64={flow.imageBase64}
+            traits={flow.traits}
+            fid={fid}
+            onMetadataUploaded={flow.onMetadataUploaded}
+            onMinted={flow.onMinted}
+            onError={flow.onError}
+          />
         );
+
       case "success":
+        if (!flow.imageBase64 || !flow.txHash) return null;
         return (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-success text-lg font-bold">Minted successfully!</p>
-          </div>
+          <SuccessScreen
+            imageBase64={flow.imageBase64}
+            txHash={flow.txHash}
+            tokenURI={flow.tokenURI}
+            imageURI={flow.imageURI}
+            onReset={flow.regenerate}
+          />
         );
+
       case "error":
         return (
           <div className="flex-1 flex flex-col items-center justify-center space-y-4">
@@ -74,6 +95,7 @@ export default function App() {
             </button>
           </div>
         );
+
       default:
         return null;
     }
