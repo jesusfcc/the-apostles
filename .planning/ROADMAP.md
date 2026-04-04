@@ -58,7 +58,7 @@ Plans:
 - [x] 03-02-PLAN.md — Client-side mint hook + contract config
 
 ### Phase 4: UI/UX
-**Goal**: Polished end-to-end mobile-first flow
+**Goal**: Polished end-to-end mobile-first flow matching vintage aesthetic
 **Depends on**: Phase 3
 **Requirements**: R6
 **Success Criteria** (what must be TRUE):
@@ -66,7 +66,11 @@ Plans:
   2. Mobile-first design matching main-apostole vintage aesthetic
   3. Loading states for trait extraction and image generation
   4. Share functionality after minting
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — App shell, state machine, Connect + Generate screens
+- [ ] 04-02-PLAN.md — Preview, Mint, Success screens + share functionality
 
 ### Phase 5: Burn + Evolve
 **Goal**: Users can burn egg → get evolved version with lineage tracking
@@ -86,5 +90,5 @@ Plans:
 | 1. Scaffold + Infra | 1/1 | Complete | 2026-04-04 |
 | 2. Trait + Image Gen | 1/1 | Complete | 2026-04-04 |
 | 3. Mint Flow | 2/2 | Complete | 2026-04-04 |
-| 4. UI/UX | 0/? | Not started | - |
+| 4. UI/UX | 0/2 | In progress | - |
 | 5. Burn + Evolve | 0/? | Not started | - |
