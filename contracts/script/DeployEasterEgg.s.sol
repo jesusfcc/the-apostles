@@ -10,7 +10,8 @@ contract DeployEasterEgg is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        EasterEgg egg = new EasterEgg();
+        uint256 mintPrice = vm.envOr("MINT_PRICE", uint256(0.001 ether));
+        EasterEgg egg = new EasterEgg(mintPrice);
 
         vm.stopBroadcast();
 
